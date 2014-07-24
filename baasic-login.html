@@ -1,0 +1,98 @@
+﻿<link rel="import" href="../baasic-ajax/baasic-ajax.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../baasic-localstorage/baasic-localstorage.html"> 
+
+<polymer-element name="baasic-login" attributes="baseUrl version application redirectUrl">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <div id="loginbox" vertical layout>
+            <div horizontal layout>
+                <div><label for="txtUsername">Username:</label></div>
+                <div flex><input id="txtUsername" type="text" value="{{username}}"></div>
+            </div>
+            <div horizontal layout>
+                <div><label for="txtPassword">Password:</label></div>
+                <div flex><input id="txtPassword" type="password" value="{{password}}"></div>
+            </div>
+            <div>
+                <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button>
+            </div>
+        </div>
+        <div id="loggedin" style="display:none" vertical layout>
+            <div>You are logged in as {{username}}</div>
+            <div>
+                <paper-button on-click="{{logOut}}" label="Log out" raisedbutton></paper-button>
+            </div>
+        </div>
+        <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
+                   id="ajax"
+                   method="POST"
+                   params='{"alt":"json", "type":"Forms"}'
+                   handleas="json"
+                   on-core-response="{{ajaxResponse}}"
+                   on-core-error="{{ajaxError}}"
+                   ></baasic-ajax>
+        <baasic-localstorage name="baasicUser" id="storage" value="{{baasicUser}}"></baasic-localstorage>
+
+    </template>
+    <script>
+        Polymer('baasic-login', {
+            baseUrl: "http://api.baasic.local",
+            version: "beta",
+            redirectUrl: "index.html",
+            username: "",
+            password: "",
+            ready: function () {
+                this.localstorageLoad();
+            },
+            created: function() {
+               
+            },
+            logIn: function () {
+                var ajax = this.$.ajax;
+                ajax.body = "grant_type=password&username=" + this.username + "&password=" + this.password;
+                ajax.go();
+            },
+            logOut: function () {
+                this.baasicUser = {};
+                this.$.storage.save();
+                this.toggleView();
+            },
+            ajaxResponse: function (event, response) {
+                this.baasicUser.accessToken = response.response.access_token;
+                this.baasicUser.tokenType = response.response.token_type;
+                this.baasicUser.userName = this.username;
+                this.$.storage.save();
+                if (!this.redirectUrl)
+                    window.location.href = this.redirectUrl;
+                else
+                    this.toggleView();
+            },
+            ajaxError: function (event, error) {
+                console.log(error);
+            },
+            localstorageLoad: function () {
+                //initialize object property in the created or similar event, rather than on the object prototype per http://www.polymer-project.org/docs/polymer/polymer.html
+                this.$.storage.load();
+                console.log(this.baasicUser);
+                if (!this.baasicUser)
+                    this.baasicUser = {};
+                this.toggleView();
+            },
+            toggleView: function () {
+                if (this.baasicUser && this.baasicUser.accessToken) {
+                    this.username = this.baasicUser.userName;
+                    $(this.$.loginbox).hide();
+                    $(this.$.loggedin).show();
+                } else {
+                    $(this.$.loginbox).show();
+                    $(this.$.loggedin).hide();
+                }
+            }
+        });
+    </script>
+</polymer-element>

@@ -1,0 +1,30 @@
+﻿{
+  "name": "baasic-login",
+  "version": "0.0.1",
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.3.3",
+    "baasic-ajax": "git://monosoftware/baasic-ajax.git#>=0.0.1",
+    "baasic-localstorage": "git://monosoftware/baasic-localstorage.git#>=0.0.1",
+    "paper-button": "Polymer/paper-button#~0.3.3",
+  },
+  "authors": [
+    "denis@mono-software.com"
+  ],
+  "description": "Baasic login Web component.",
+  "keywords": [
+    "polymer",
+    "web-components",
+    "baasic",
+    "membership",
+    "login"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/monosoftware/baasic-login",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
