@@ -5,7 +5,7 @@
     "polymer": "Polymer/polymer#~0.3.3",
     "baasic-ajax": "git://monosoftware/baasic-ajax.git#>=0.0.1",
     "baasic-localstorage": "git://monosoftware/baasic-localstorage.git#>=0.0.1",
-    "paper-button": "Polymer/paper-button#~0.3.3",
+    "paper-button": "Polymer/paper-button#~0.3.3"
   },
   "authors": [
     "denis@mono-software.com"
