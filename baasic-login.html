@@ -1,6 +1,6 @@
 ﻿<link rel="import" href="../baasic-ajax/baasic-ajax.html">
 <link rel="import" href="../paper-button/paper-button.html">
-<link rel="import" href="../baasic-localstorage/baasic-localstorage.html"> 
+<link rel="import" href="../baasic-globals/baasic-globals.html">
 
 <polymer-element name="baasic-login" attributes="baseUrl version application redirectUrl">
     <template>
@@ -29,14 +29,13 @@
             </div>
         </div>
         <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
-                   id="ajax"
-                   method="POST"
-                   params='{"alt":"json", "type":"Forms"}'
-                   handleas="json"
-                   on-core-response="{{ajaxResponse}}"
-                   on-core-error="{{ajaxError}}"
-                   ></baasic-ajax>
-        <baasic-localstorage name="baasicUser" id="storage" value="{{baasicUser}}"></baasic-localstorage>
+                     id="ajax"
+                     method="POST"
+                     params='{"alt":"json", "type":"Forms"}'
+                     handleas="json"
+                     on-core-response="{{ajaxResponse}}"
+                     on-core-error="{{ajaxError}}"></baasic-ajax>
+        <baasic-globals id="globals"></baasic-globals>
 
     </template>
     <script>
@@ -47,10 +46,10 @@
             username: "",
             password: "",
             ready: function () {
-                this.localstorageLoad();
+                this.globals = this.$.globals;
+                this.toggleView();
             },
-            created: function() {
-               
+            created: function () {
             },
             logIn: function () {
                 var ajax = this.$.ajax;
@@ -58,37 +57,32 @@
                 ajax.go();
             },
             logOut: function () {
-                this.baasicUser = {};
-                this.$.storage.save();
+                this.globals.baasicUser = {};
                 this.toggleView();
             },
             ajaxResponse: function (event, response) {
-                this.baasicUser.accessToken = response.response.access_token;
-                this.baasicUser.tokenType = response.response.token_type;
-                this.baasicUser.userName = this.username;
-                this.$.storage.save();
+                var u = {
+                    accessToken: response.response.access_token,
+                    tokenType: response.response.token_type,
+                    userName: this.username
+                };
+                this.globals.baasicUser = u;
                 if (!this.redirectUrl)
                     window.location.href = this.redirectUrl;
                 else
                     this.toggleView();
             },
             ajaxError: function (event, error) {
+                //TODO: warning dialog or something similar?
                 console.log(error);
             },
-            localstorageLoad: function () {
-                //initialize object property in the created or similar event, rather than on the object prototype per http://www.polymer-project.org/docs/polymer/polymer.html
-                this.$.storage.load();
-                console.log(this.baasicUser);
-                if (!this.baasicUser)
-                    this.baasicUser = {};
-                this.toggleView();
-            },
             toggleView: function () {
-                if (this.baasicUser && this.baasicUser.accessToken) {
-                    this.username = this.baasicUser.userName;
+                if (this.globals.baasicUser && this.globals.baasicUser.accessToken) {
+                    this.username = this.globals.baasicUser.userName;
                     $(this.$.loginbox).hide();
                     $(this.$.loggedin).show();
                 } else {
+                    this.username = '';
                     $(this.$.loginbox).show();
                     $(this.$.loggedin).hide();
                 }
