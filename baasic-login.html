@@ -78,7 +78,6 @@
             localstorageLoad: function () {
                 //initialize object property in the created or similar event, rather than on the object prototype per http://www.polymer-project.org/docs/polymer/polymer.html
                 this.$.storage.load();
-                console.log(this.baasicUser);
                 if (!this.baasicUser)
                     this.baasicUser = {};
                 this.toggleView();
