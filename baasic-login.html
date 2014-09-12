@@ -34,10 +34,19 @@
         <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
                      id="ajax"
                      method="POST"
-                     params='{"alt":"json", "type":"Forms"}'
+                     params='{"type":"Forms"}'
                      handleas="json"
-                     on-core-response="{{ajaxResponse}}"
-                     on-core-error="{{ajaxError}}"></baasic-ajax>
+                     on-core-response="{{ajaxPostResponse}}"
+                     on-core-error="{{ajaxPostError}}"></baasic-ajax>
+        <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
+                     id="ajaxGet"
+                     method="GET"
+                     params='{"type":"Forms"}'
+                     contentType="application/json"
+                     handleas="json"
+                     on-core-response="{{ajaxGetResponse}}"
+                     on-core-error="{{ajaxGetError}}"></baasic-ajax>
+
         <baasic-localstorage name="baasicUser" id="storage" value="{{baasicUser}}"></baasic-localstorage>
 
     </template>
@@ -64,10 +73,25 @@
                 this.toggleView();
                 this.fire('core-signal', { name: "user-login", data: { baasicUser: {} } });
             },
-            ajaxResponse: function (event, response) {
+            ajaxPostResponse: function (event, response) {
                 this.baasicUser.accessToken = response.response.access_token;
                 this.baasicUser.tokenType = response.response.token_type;
                 this.baasicUser.userName = this.username;
+                //this.$.storage.save();
+                this.$.ajaxGet.go();
+                //if (!this.redirectUrl)
+                //    window.location.href = this.redirectUrl;
+                //else
+                //    this.toggleView();
+                //this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
+
+            },
+            ajaxPostError: function (event, error) {
+                console.log(error);
+            },
+            ajaxGetResponse: function (event, response) {
+                this.baasicUser.roles = response.response.roles;
+                this.baasicUser.id = response.response.id;
                 this.$.storage.save();
                 if (!this.redirectUrl)
                     window.location.href = this.redirectUrl;
@@ -76,7 +100,7 @@
                 this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
 
             },
-            ajaxError: function (event, error) {
+            ajaxGetError: function (event, error) {
                 console.log(error);
             },
             localstorageLoad: function () {
