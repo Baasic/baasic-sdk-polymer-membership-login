@@ -71,20 +71,17 @@
                 this.baasicUser = {};
                 this.$.storage.save();
                 this.toggleView();
+                //signal that user has logged out, so other modules could switch views acordingly
                 this.fire('core-signal', { name: "user-login", data: { baasicUser: {} } });
             },
             ajaxPostResponse: function (event, response) {
                 this.baasicUser.accessToken = response.response.access_token;
                 this.baasicUser.tokenType = response.response.token_type;
                 this.baasicUser.userName = this.username;
-                //this.$.storage.save();
+                //save what we have until now
+                this.$.storage.save();
+                //before saving the user ata to local storage, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
                 this.$.ajaxGet.go();
-                //if (!this.redirectUrl)
-                //    window.location.href = this.redirectUrl;
-                //else
-                //    this.toggleView();
-                //this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
-
             },
             ajaxPostError: function (event, error) {
                 console.log(error);
@@ -92,12 +89,16 @@
             ajaxGetResponse: function (event, response) {
                 this.baasicUser.roles = response.response.roles;
                 this.baasicUser.id = response.response.id;
+                //now that we have everything, save the user ata to the local storage
                 this.$.storage.save();
+                //signal that user has logged in, so other modules could switch views acordingly
+                this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
+                //redirect to another URL if needed
                 if (!this.redirectUrl)
                     window.location.href = this.redirectUrl;
                 else
                     this.toggleView();
-                this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
+                
 
             },
             ajaxGetError: function (event, error) {
