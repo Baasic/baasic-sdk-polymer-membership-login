@@ -4,6 +4,7 @@
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../baasic-localstorage/baasic-localstorage.html">
 <link rel="import" href="../core-signals/core-signals.html">
+<link rel="import" href="../baasic-globals/baasic-globals.html">
 
 <polymer-element name="baasic-login" attributes="baseUrl version application redirectUrl">
     <template>
@@ -31,6 +32,7 @@
                 </div>
             </template>
         </div>
+        <baasic-globals id="globals"></baasic-globals>
         <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
                      id="ajax"
                      method="POST"
@@ -48,18 +50,21 @@
                      on-core-error="{{ajaxGetError}}"></baasic-ajax>
 
         <baasic-localstorage name="baasicUser" id="storage" value="{{baasicUser}}"></baasic-localstorage>
+        
 
     </template>
     <script>
         Polymer('baasic-login', {
-            baseUrl: "http://api.baasic.local",
-            version: "beta",
             redirectUrl: "index.html",
             username: "",
             password: "",
             baasicUser: {},
             isLoggedIn: false,
             ready: function () {
+                var globals = this.$.globals;
+                if (!this.baseUrl) this.baseUrl = globals.config.baseUrl;
+                if (!this.version) this.version = globals.config.version;
+                if (!this.application) this.application = globals.config.application;
                 this.localstorageLoad();
             },
             logIn: function () {
