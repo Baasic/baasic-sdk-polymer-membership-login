@@ -1,11 +1,13 @@
 {
   "name": "baasic-login",
-  "version": "0.0.1",
   "dependencies": {
-    "polymer": "Polymer/polymer#~0.3.3",
+    "polymer": "Polymer/polymer#>=0.3.3",
     "baasic-ajax": "http://gitserver/monosoftware/baasic-ajax.git#>=0.0.1",
     "baasic-globals": "http://gitserver/monosoftware/baasic-globals.git#>=0.0.1",
-    "paper-button": "Polymer/paper-button#~0.3.3"
+    "baasic-localstorage": "http://gitserver/monosoftware/baasic-localstroage.git#>=0.0.1",
+    "paper-button": "Polymer/paper-button#>=0.3.3",
+    "paper-input": "Polymer/paper-input#>=0.3.3",
+    "core-signals": "Polymer/core-signals#>=0.3.3"
   },
   "authors": [
     "denis@mono-software.com"

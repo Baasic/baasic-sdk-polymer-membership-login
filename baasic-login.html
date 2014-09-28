@@ -1,5 +1,9 @@
-﻿<link rel="import" href="../baasic-ajax/baasic-ajax.html">
+﻿<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../baasic-ajax/baasic-ajax.html">
+<link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../baasic-localstorage/baasic-localstorage.html">
+<link rel="import" href="../core-signals/core-signals.html">
 <link rel="import" href="../baasic-globals/baasic-globals.html">
 
 <polymer-element name="baasic-login" attributes="baseUrl version application redirectUrl">
@@ -9,47 +13,59 @@
                 display: block;
             }
         </style>
-        <div id="loginbox" vertical layout>
-            <div horizontal layout>
-                <div><label for="txtUsername">Username:</label></div>
-                <div flex><input id="txtUsername" type="text" value="{{username}}"></div>
-            </div>
-            <div horizontal layout>
-                <div><label for="txtPassword">Password:</label></div>
-                <div flex><input id="txtPassword" type="password" value="{{password}}"></div>
-            </div>
-            <div>
-                <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button>
-            </div>
+        <div id="container">
+            <template bind if="{{!isLoggedIn}}">
+                <div id="loginbox" vertical layout>
+                    <div flex><paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input></div>
+                    <div flex><paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input></div>
+                    <div>
+                        <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button>
+                    </div>
+                </div>
+            </template>
+            <template bind if="{{isLoggedIn}}">
+                <div id="loggedin" vertical layout>
+                    <div>You are logged in as {{baasicUser.userName}}</div>
+                    <div>
+                        <paper-button on-click="{{logOut}}" label="Log out" raisedbutton></paper-button>
+                    </div>
+                </div>
+            </template>
         </div>
-        <div id="loggedin" style="display:none" vertical layout>
-            <div>You are logged in as {{username}}</div>
-            <div>
-                <paper-button on-click="{{logOut}}" label="Log out" raisedbutton></paper-button>
-            </div>
-        </div>
+        <baasic-globals id="globals"></baasic-globals>
         <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
                      id="ajax"
                      method="POST"
-                     params='{"alt":"json", "type":"Forms"}'
+                     params='{"type":"Forms"}'
                      handleas="json"
-                     on-core-response="{{ajaxResponse}}"
-                     on-core-error="{{ajaxError}}"></baasic-ajax>
-        <baasic-globals id="globals"></baasic-globals>
+                     on-core-response="{{ajaxPostResponse}}"
+                     on-core-error="{{ajaxPostError}}"></baasic-ajax>
+        <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
+                     id="ajaxGet"
+                     method="GET"
+                     params='{"type":"Forms"}'
+                     contentType="application/json"
+                     handleas="json"
+                     on-core-response="{{ajaxGetResponse}}"
+                     on-core-error="{{ajaxGetError}}"></baasic-ajax>
+
+        <baasic-localstorage name="baasicUser" id="storage" value="{{baasicUser}}"></baasic-localstorage>
+        
 
     </template>
     <script>
         Polymer('baasic-login', {
-            baseUrl: "http://api.baasic.local",
-            version: "beta",
             redirectUrl: "index.html",
             username: "",
             password: "",
+            baasicUser: {},
+            isLoggedIn: false,
             ready: function () {
-                this.globals = this.$.globals;
-                this.toggleView();
-            },
-            created: function () {
+                var globals = this.$.globals;
+                if (!this.baseUrl) this.baseUrl = globals.config.baseUrl;
+                if (!this.version) this.version = globals.config.version;
+                if (!this.application) this.application = globals.config.application;
+                this.localstorageLoad();
             },
             logIn: function () {
                 var ajax = this.$.ajax;
@@ -57,35 +73,51 @@
                 ajax.go();
             },
             logOut: function () {
-                this.globals.baasicUser = {};
+                this.baasicUser = {};
+                this.$.storage.save();
                 this.toggleView();
+                //signal that user has logged out, so other modules could switch views acordingly
+                this.fire('core-signal', { name: "user-login", data: { baasicUser: {} } });
             },
-            ajaxResponse: function (event, response) {
-                var u = {
-                    accessToken: response.response.access_token,
-                    tokenType: response.response.token_type,
-                    userName: this.username
-                };
-                this.globals.baasicUser = u;
+            ajaxPostResponse: function (event, response) {
+                this.baasicUser.accessToken = response.response.access_token;
+                this.baasicUser.tokenType = response.response.token_type;
+                this.baasicUser.userName = this.username;
+                //save what we have until now
+                this.$.storage.save();
+                //before saving the user ata to local storage, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
+                this.$.ajaxGet.go();
+            },
+            ajaxPostError: function (event, error) {
+                console.log(error);
+            },
+            ajaxGetResponse: function (event, response) {
+                this.baasicUser.roles = response.response.roles;
+                this.baasicUser.id = response.response.id;
+                //now that we have everything, save the user ata to the local storage
+                this.$.storage.save();
+                //signal that user has logged in, so other modules could switch views acordingly
+                this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
+                //redirect to another URL if needed
                 if (!this.redirectUrl)
                     window.location.href = this.redirectUrl;
                 else
                     this.toggleView();
+                
+
             },
-            ajaxError: function (event, error) {
-                //TODO: warning dialog or something similar?
+            ajaxGetError: function (event, error) {
                 console.log(error);
             },
+            localstorageLoad: function () {
+                //initialize object property in the created or similar event, rather than on the object prototype per http://www.polymer-project.org/docs/polymer/polymer.html
+                this.$.storage.load();
+                if (!this.baasicUser)
+                    this.baasicUser = {};
+                this.toggleView();
+            },
             toggleView: function () {
-                if (this.globals.baasicUser && this.globals.baasicUser.accessToken) {
-                    this.username = this.globals.baasicUser.userName;
-                    $(this.$.loginbox).hide();
-                    $(this.$.loggedin).show();
-                } else {
-                    this.username = '';
-                    $(this.$.loginbox).show();
-                    $(this.$.loggedin).hide();
-                }
+                this.isLoggedIn = (this.baasicUser && this.baasicUser.accessToken);
             }
         });
     </script>
