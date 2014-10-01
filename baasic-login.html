@@ -1,4 +1,4 @@
-﻿<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../baasic-ajax/baasic-ajax.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-button/paper-button.html">
@@ -16,8 +16,8 @@
         <div id="container">
             <template bind if="{{!isLoggedIn}}">
                 <div id="loginbox" vertical layout>
-                    <div flex><paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input></div>
-                    <div flex><paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input></div>
+                    <div><paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input></div>
+                    <div><paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input></div>
                     <div>
                         <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button>
                     </div>
