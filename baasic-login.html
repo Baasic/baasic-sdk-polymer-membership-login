@@ -1,8 +1,8 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../baasic-ajax/baasic-ajax.html">
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../paper-button/paper-button.html">
-<link rel="import" href="../baasic-localstorage/baasic-localstorage.html">
 <link rel="import" href="../core-signals/core-signals.html">
 <link rel="import" href="../baasic-globals/baasic-globals.html">
 
@@ -44,17 +44,19 @@
                      id="ajaxGet"
                      method="GET"
                      params='{"type":"Forms"}'
-                     contentType="application/json"
+                     contenttype="application/json"
                      handleas="json"
                      on-core-response="{{ajaxGetResponse}}"
                      on-core-error="{{ajaxGetError}}"></baasic-ajax>
 
-        <baasic-localstorage name="baasicUser" id="storage" value="{{baasicUser}}"></baasic-localstorage>
-        
-
+        <core-signals on-core-signal-user-login="{{loginChanged}}"></core-signals>
+        <paper-toast text="An error has occured while trying to log you in. Please check your data and try again." id="toastError" onclick="discardToast(el)"></paper-toast>
     </template>
     <script>
         Polymer('baasic-login', {
+            baseUrl: '',
+            version: '',
+            application: '',
             redirectUrl: 'index.html',
             username: '',
             password: '',
@@ -78,19 +80,27 @@
                 ajax.body = 'grant_type=password&username=' + this.username + '&password=' + this.password;
                 ajax.go();
             },
-            logOut: function () {
+            loginChanged: function(data) {
+                if (data.detail && data.detail.baasicUser && !data.detail.baasicUser.accessToken) {
+                    this.resetUser();
+                }
+            },
+            resetUser: function() {
                 this.baasicUser = {};
                 Baasic.Cache.removeItem('baasicUser');
                 this.toggleView();
+            },
+            logOut: function () {
+                this.resetUser();
                 //signal that user has logged out, so other modules could switch views acordingly
-                this.fire('core-signal', { name: "user-login", data: { baasicUser: {} } });
+                this.fire('core-signal', { name: 'user-login', data: { baasicUser: {} } });
             },
             ajaxPostResponse: function (e) {
                 this.baasicUser.accessToken = e.detail.response.access_token;
                 this.baasicUser.tokenType = e.detail.response.token_type;
                 this.baasicUser.userName = this.username;
                 this.baasicUser.expiresIn = e.detail.response.expires_in;
-               
+
                 //before saving the user ata to local storage, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
                 var ajaxGet = this.$.ajaxGet;
                 var headers = ajaxGet.headers || {};
@@ -99,27 +109,31 @@
                 this.$.ajaxGet.go();
             },
             ajaxPostError: function (e) {
-                console.log(e.detail);
+                //console.log(e.detail);
+                this.$.toastError.show();
             },
             ajaxGetResponse: function (e) {
                 this.baasicUser.roles = e.detail.response.roles;
                 this.baasicUser.id = e.detail.response.id;
-                //now that we have everything, save the user ata to the local storage
-                Baasic.Cache.setItem("baasicUser", this.baasicUser, {
-                    expirationAbsolute: null,
-                    expirationSliding: e.detail.expires_in,
+                this.baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this.baasicUser.expiresIn * 1000));
+                this.baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.$.globals.config.adminRoles, e.detail.response.roles);
+
+                //now that we have everything, save the user data to the local storage
+                Baasic.Cache.setItem('baasicUser', this.baasicUser, {
+                    expirationAbsolute: this.baasicUser.expiresAbsolute,
+                    expirationSliding: null,
                     priority: Cache.Priority.HIGH,
-                    callback: function (k, v) { this.logOut(); }
+                    callback: null
                 });
 
                 //signal that user has logged in, so other modules could switch views acordingly
-                this.fire('core-signal', { name: "user-login", data: { baasicUser: this.baasicUser } });
+                this.fire('core-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
                 //redirect to another URL if needed
                 if (!this.redirectUrl)
                     window.location.href = this.redirectUrl;
                 else
                     this.toggleView();
-                
+
 
             },
             ajaxGetError: function (e) {
@@ -127,6 +141,9 @@
             },
             toggleView: function () {
                 this.isLoggedIn = (this.baasicUser && this.baasicUser.accessToken);
+            },
+            discardToast: function (el) {
+                el.dismiss();
             }
         });
     </script>
