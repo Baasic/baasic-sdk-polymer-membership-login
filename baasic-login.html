@@ -1,3 +1,18 @@
+<!--
+Copyright (c) 2014 Mono d.o.o. All rights reserved.
+Code distributed by Mono as a part of the Baasic project
+-->
+
+<!--
+@group Baasic Polymer Elements
+
+The `baasic-login` element provides support for authenticating users and logging them in to Baasic applications.
+    <baasic-login application="webcomponents"></baasic-login>
+
+@element baasic-login
+@status beta
+@homepage www.baasic.com
+-->
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../baasic-ajax/baasic-ajax.html">
 <link rel="import" href="../paper-input/paper-input.html">
@@ -12,6 +27,60 @@
             :host {
                 display: block;
             }
+            /* spinner by https://github.com/tobiasahlin/SpinKit */
+            .spinner {
+              /* margin: 100px auto; */
+              width: 50px;
+              height: 30px;
+              text-align: center;
+              font-size: 10px;
+              display: inline-block;
+            }
+
+            .spinner > div {
+              background-color: #333;
+              height: 100%;
+              width: 6px;
+              display: inline-block;
+  
+              -webkit-animation: stretchdelay 1.2s infinite ease-in-out;
+              animation: stretchdelay 1.2s infinite ease-in-out;
+            }
+
+            .spinner .rect2 {
+              -webkit-animation-delay: -1.1s;
+              animation-delay: -1.1s;
+            }
+
+            .spinner .rect3 {
+              -webkit-animation-delay: -1.0s;
+              animation-delay: -1.0s;
+            }
+
+            .spinner .rect4 {
+              -webkit-animation-delay: -0.9s;
+              animation-delay: -0.9s;
+            }
+
+            .spinner .rect5 {
+              -webkit-animation-delay: -0.8s;
+              animation-delay: -0.8s;
+            }
+
+            @-webkit-keyframes stretchdelay {
+              0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
+              20% { -webkit-transform: scaleY(1.0) }
+            }
+
+            @keyframes stretchdelay {
+              0%, 40%, 100% { 
+                transform: scaleY(0.4);
+                -webkit-transform: scaleY(0.4);
+              }  20% { 
+                transform: scaleY(1.0);
+                -webkit-transform: scaleY(1.0);
+              }
+            }
         </style>
         <div id="container">
             <template bind if="{{!isLoggedIn}}">
@@ -19,8 +88,19 @@
                     <div><paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input></div>
                     <div><paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input></div>
                     <div>
-                        <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button>
+                        <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button> 
+                        <template bind if="{{loginInProgress}}">
+                            <div class="spinner">
+                              <div class="rect1"></div>
+                              <div class="rect2"></div>
+                              <div class="rect3"></div>
+                              <div class="rect4"></div>
+                              <div class="rect5"></div>
+                            </div>
+                        </template>
                     </div>
+
+
                 </div>
             </template>
             <template bind if="{{isLoggedIn}}">
@@ -54,14 +134,49 @@
     </template>
     <script>
         Polymer('baasic-login', {
+            /**
+             * Fires a core signal names user-login when user changes login status.
+             * 
+             * @event core-signal
+             */
+            /**
+            /**
+             * The URL target of the Baasic service. Can be used with baasic-globals element to set the property for all baasic elements in one place.
+             * 
+             * @attribute baseUrl
+             * @type string
+             * @default ''
+             */
             baseUrl: '',
+            /**
+             * The versione Baasic service. Can be used with baasic-globals element to set the property for all baasic elements in one place.
+             * 
+             * @attribute version
+             * @type string
+             * @default ''
+             */
             version: '',
+            /**
+             * The name of the Baasic application, unique per user. Can be used with baasic-globals element to set the property for all baasic elements in one place.
+             * 
+             * @attribute application
+             * @type string
+             * @default ''
+             */
             application: '',
-            redirectUrl: 'index.html',
+            /**
+             * URL of the page that user is redirected to when logged in. 
+             * 
+             * @attribute application
+             * @type string
+             * @default ''
+             */
+            redirectUrl: '',
             username: '',
             password: '',
             baasicUser: {},
             isLoggedIn: false,
+            loginInProgress: false,
             ready: function () {
                 var globals = this.$.globals;
                 if (!this.baseUrl) this.baseUrl = globals.config.baseUrl;
@@ -76,16 +191,17 @@
                 this.toggleView();
             },
             logIn: function () {
+                this.loginInProgress = true;
                 var ajax = this.$.ajax;
                 ajax.body = 'grant_type=password&username=' + this.username + '&password=' + this.password;
                 ajax.go();
             },
-            loginChanged: function(data) {
+            loginChanged: function (data) {
                 if (data.detail && data.detail.baasicUser && !data.detail.baasicUser.accessToken) {
                     this.resetUser();
                 }
             },
-            resetUser: function() {
+            resetUser: function () {
                 this.baasicUser = {};
                 Baasic.Cache.removeItem('baasicUser');
                 this.toggleView();
@@ -100,8 +216,7 @@
                 this.baasicUser.tokenType = e.detail.response.token_type;
                 this.baasicUser.userName = this.username;
                 this.baasicUser.expiresIn = e.detail.response.expires_in;
-
-                //before saving the user ata to local storage, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
+                //before storing the user to the cache, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
                 var ajaxGet = this.$.ajaxGet;
                 var headers = ajaxGet.headers || {};
                 headers['Authorization'] = this.baasicUser.tokenType + ' ' + this.baasicUser.accessToken;
@@ -110,6 +225,7 @@
             },
             ajaxPostError: function (e) {
                 //console.log(e.detail);
+                this.loginInProgress = false;
                 this.$.toastError.show();
             },
             ajaxGetResponse: function (e) {
@@ -117,7 +233,6 @@
                 this.baasicUser.id = e.detail.response.id;
                 this.baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this.baasicUser.expiresIn * 1000));
                 this.baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.$.globals.config.adminRoles, e.detail.response.roles);
-
                 //now that we have everything, save the user data to the local storage
                 Baasic.Cache.setItem('baasicUser', this.baasicUser, {
                     expirationAbsolute: this.baasicUser.expiresAbsolute,
@@ -128,19 +243,23 @@
 
                 //signal that user has logged in, so other modules could switch views acordingly
                 this.fire('core-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
+                this.loginInProgress = false;
                 //redirect to another URL if needed
-                if (!this.redirectUrl)
+                if (this.redirectUrl)
                     window.location.href = this.redirectUrl;
                 else
                     this.toggleView();
 
-
             },
             ajaxGetError: function (e) {
-                console.log(e.detail);
+                this.loginInProgress = false;
+                this.$.toastError.show();
             },
             toggleView: function () {
-                this.isLoggedIn = (this.baasicUser && this.baasicUser.accessToken);
+                if (this.baasicUser && this.baasicUser.accessToken)
+                    this.isLoggedIn = true;
+                else
+                    this.isLoggedIn = false;
             },
             discardToast: function (el) {
                 el.dismiss();
