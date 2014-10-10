@@ -88,7 +88,7 @@ The `baasic-login` element provides support for authenticating users and logging
                     <div><paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input></div>
                     <div><paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input></div>
                     <div>
-                        <paper-button on-click="{{logIn}}" label="Log in" raisedbutton></paper-button> 
+                        <paper-button on-click="{{logIn}}" raised>Log in</paper-button> 
                         <template bind if="{{loginInProgress}}">
                             <div class="spinner">
                               <div class="rect1"></div>
@@ -107,7 +107,7 @@ The `baasic-login` element provides support for authenticating users and logging
                 <div id="loggedin" vertical layout>
                     <div>You are logged in as {{baasicUser.userName}}</div>
                     <div>
-                        <paper-button on-click="{{logOut}}" label="Log out" raisedbutton></paper-button>
+                        <paper-button on-click="{{logOut}}" raised>Log out</paper-button>
                     </div>
                 </div>
             </template>
