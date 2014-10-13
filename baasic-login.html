@@ -207,7 +207,6 @@ The `baasic-login` element provides support for authenticating users and logging
                 this.toggleView();
             },
             logOut: function () {
-                this.resetUser();
                 //signal that user has logged out, so other modules could switch views acordingly
                 this.fire('core-signal', { name: 'user-login', data: { baasicUser: {} } });
             },
@@ -224,7 +223,6 @@ The `baasic-login` element provides support for authenticating users and logging
                 this.$.ajaxGet.go();
             },
             ajaxPostError: function (e) {
-                //console.log(e.detail);
                 this.loginInProgress = false;
                 this.$.toastError.show();
             },
