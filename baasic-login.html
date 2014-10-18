@@ -27,87 +27,75 @@ The `baasic-login` element provides support for authenticating users and logging
             :host {
                 display: block;
             }
-            /* spinner by https://github.com/tobiasahlin/SpinKit */
-            .spinner {
-              /* margin: 100px auto; */
-              width: 50px;
-              height: 30px;
-              text-align: center;
+
+            /* Logged in */
+            .logininfo .message {
+              margin-bottom: 20px;
+            }
+
+            /* Loginbox */
+            .loginform {
+              margin-bottom: 20px;
+            }
+            /* loader by http://projects.lukehaas.me/css-loaders/ */
+            .loader {
+              display: inline-block;
               font-size: 10px;
-              display: inline-block;
+              position: relative;
+              text-indent: -9999em;
+              border-top: 2px solid #00c2e8;
+              border-right: 2px solid #00c2e8;
+              border-bottom: 2px solid #00c2e8;
+              border-left: 2px solid transparent;
+              -webkit-animation: load8 1.1s infinite linear;
+              animation: load8 1.1s infinite linear;
             }
-
-            .spinner > div {
-              background-color: #333;
-              height: 100%;
-              width: 6px;
-              display: inline-block;
-  
-              -webkit-animation: stretchdelay 1.2s infinite ease-in-out;
-              animation: stretchdelay 1.2s infinite ease-in-out;
+            .loader,
+            .loader:after {
+              border-radius: 50%;
+              width: 2em;
+              height: 2em;
             }
-
-            .spinner .rect2 {
-              -webkit-animation-delay: -1.1s;
-              animation-delay: -1.1s;
-            }
-
-            .spinner .rect3 {
-              -webkit-animation-delay: -1.0s;
-              animation-delay: -1.0s;
-            }
-
-            .spinner .rect4 {
-              -webkit-animation-delay: -0.9s;
-              animation-delay: -0.9s;
-            }
-
-            .spinner .rect5 {
-              -webkit-animation-delay: -0.8s;
-              animation-delay: -0.8s;
-            }
-
-            @-webkit-keyframes stretchdelay {
-              0%, 40%, 100% { -webkit-transform: scaleY(0.4) }  
-              20% { -webkit-transform: scaleY(1.0) }
-            }
-
-            @keyframes stretchdelay {
-              0%, 40%, 100% { 
-                transform: scaleY(0.4);
-                -webkit-transform: scaleY(0.4);
-              }  20% { 
-                transform: scaleY(1.0);
-                -webkit-transform: scaleY(1.0);
+            @-webkit-keyframes load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
               }
             }
+            @keyframes load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }
+
         </style>
         <div id="container">
             <template bind if="{{!isLoggedIn}}">
-                <div id="loginbox" vertical layout>
-                    <div><paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input></div>
-                    <div><paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input></div>
-                    <div>
-                        <paper-button on-click="{{logIn}}" raised>Log in</paper-button> 
-                        <template bind if="{{loginInProgress}}">
-                            <div class="spinner">
-                              <div class="rect1"></div>
-                              <div class="rect2"></div>
-                              <div class="rect3"></div>
-                              <div class="rect4"></div>
-                              <div class="rect5"></div>
-                            </div>
-                        </template>
+                <div id="loginbox">
+                    <div class="[ loginform ]">
+                      <paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input>
+                      <paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input>
                     </div>
-
-
+                    <paper-button on-click="{{logIn}}">Log in</paper-button> 
+                    <template bind if="{{loginInProgress}}">
+                        <span class="loader">Loading</span>
+                    </template>
                 </div>
             </template>
             <template bind if="{{isLoggedIn}}">
-                <div id="loggedin" vertical layout>
-                    <div>You are logged in as {{baasicUser.userName}}</div>
+                <div id="loggedin" class="[ logininfo ]">
+                    <div class="[ message ]">Welcome <strong>{{baasicUser.userName}}!</strong></div>
                     <div>
-                        <paper-button on-click="{{logOut}}" raised>Log out</paper-button>
+                        <paper-button on-click="{{logOut}}">Log out</paper-button>
                     </div>
                 </div>
             </template>

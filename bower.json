@@ -6,12 +6,9 @@
     "paper-input": "Polymer/paper-input#>=0.4.2",
     "paper-toast": "Polymer/paper-toast#>=0.4.2",
     "core-signals": "Polymer/core-signals#>=0.4.2",
-    "baasic-ajax": "http://gitserver/monosoftware/baasic-sdk-polymer-core-ajax.git#>=0.0.1",
-    "baasic-globals": "http://gitserver/monosoftware/baasic-sdk-polymer-core-globals.git#>=0.0.1"
+    "baasic-ajax": "Baasic/baasic-sdk-polymer-core-ajax#>=0.1.0",
+    "baasic-globals":  "Baasic/baasic-sdk-polymer-core-globals#>=0.1.0"
   },
-  "authors": [
-    "denis@mono-software.com"
-  ],
   "description": "Baasic login Web component.",
   "keywords": [
     "polymer",
@@ -21,7 +18,7 @@
     "login"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/monosoftware/baasic-login",
+  "homepage": "https://github.com/baasic/baasic-sdk-polymer-membership-login",
   "ignore": [
     "**/.*",
     "node_modules",
