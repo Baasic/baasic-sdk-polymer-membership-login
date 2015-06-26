@@ -1,255 +1,243 @@
 <!--
-Copyright (c) 2014 Mono d.o.o. All rights reserved.
-Code distributed by Mono as a part of the Baasic project
--->
-
-<!--
-@group Baasic Polymer Elements
-
-The `baasic-login` element provides support for authenticating users and logging them in to Baasic applications.
-    <baasic-login application="webcomponents"></baasic-login>
-
-@element baasic-login
-@status beta
-@homepage www.baasic.com
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../baasic-ajax/baasic-ajax.html">
+<link rel="import" href="../baasic-globals/globals-import.html">
+<link rel="import" href="../baasic-globals/config.html">
+<link rel="import" href="../baasic-globals/baasic-ajax.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../paper-button/paper-button.html">
-<link rel="import" href="../core-signals/core-signals.html">
-<link rel="import" href="../baasic-globals/baasic-globals.html">
+<link rel="import" href="../iron-signals/iron-signals.html">
 
-<polymer-element name="baasic-login" attributes="baseUrl version application redirectUrl">
-    <template>
-        <style>
-            :host {
-                display: block;
-            }
+<!--
+An element providing a solution to no problem in particular.
 
-            /* Logged in */
-            .logininfo .message {
-              margin-bottom: 20px;
-            }
+Example:
 
-            /* Loginbox */
-            .loginform {
-              margin-bottom: 20px;
-            }
-            /* loader by http://projects.lukehaas.me/css-loaders/ */
-            .loader {
-              display: inline-block;
-              font-size: 10px;
-              position: relative;
-              text-indent: -9999em;
-              border-top: 2px solid #00c2e8;
-              border-right: 2px solid #00c2e8;
-              border-bottom: 2px solid #00c2e8;
-              border-left: 2px solid transparent;
-              -webkit-animation: load8 1.1s infinite linear;
-              animation: load8 1.1s infinite linear;
-            }
+    <baasic-login></baasic-login>
+
+@demo
+-->
+<dom-module id="baasic-login">
+
+    <style>
+        :host {
+            display: block;
+        }
+
+        /* Logged in */
+        .logininfo .message {
+            margin-bottom: 20px;
+        }
+
+        /* Loginbox */
+        .loginform {
+            margin-bottom: 20px;
+        }
+        /* loader by http://projects.lukehaas.me/css-loaders/ */
+        .loader {
+            display: inline-block;
+            font-size: 10px;
+            position: relative;
+            text-indent: -9999em;
+            border-top: 2px solid #00c2e8;
+            border-right: 2px solid #00c2e8;
+            border-bottom: 2px solid #00c2e8;
+            border-left: 2px solid transparent;
+            -webkit-animation: load8 1.1s infinite linear;
+            animation: load8 1.1s infinite linear;
+        }
+
             .loader,
             .loader:after {
-              border-radius: 50%;
-              width: 2em;
-              height: 2em;
-            }
-            @-webkit-keyframes load8 {
-              0% {
-                -webkit-transform: rotate(0deg);
-                transform: rotate(0deg);
-              }
-              100% {
-                -webkit-transform: rotate(360deg);
-                transform: rotate(360deg);
-              }
-            }
-            @keyframes load8 {
-              0% {
-                -webkit-transform: rotate(0deg);
-                transform: rotate(0deg);
-              }
-              100% {
-                -webkit-transform: rotate(360deg);
-                transform: rotate(360deg);
-              }
+                border-radius: 50%;
+                width: 2em;
+                height: 2em;
             }
 
-        </style>
+        @-webkit-keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes load8 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    <template>
         <div id="container">
-            <template bind if="{{!isLoggedIn}}">
+            <template is="dom-if" if="{{!isLoggedIn}}">
                 <div id="loginbox">
                     <div class="[ loginform ]">
-                      <paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input>
-                      <paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input>
+                        <paper-input id="txtUsername" label="Username" value="{{username}}" floatinglabel></paper-input>
+                        <paper-input id="txtPassword" label="Password" type="password" value="{{password}}" floatinglabel></paper-input>
                     </div>
-                    <paper-button on-click="{{logIn}}">Log in</paper-button> 
-                    <template bind if="{{loginInProgress}}">
+                    <paper-button on-click="logIn">Log in</paper-button>
+                    <template is="dom-if" if="{{loginInProgress}}">
                         <span class="loader">Loading</span>
                     </template>
                 </div>
             </template>
-            <template bind if="{{isLoggedIn}}">
+            <template is="dom-if" if="{{isLoggedIn}}">
                 <div id="loggedin" class="[ logininfo ]">
-                    <div class="[ message ]">Welcome <strong>{{baasicUser.userName}}!</strong></div>
+                    <div class="[ message ]">Welcome <strong>{{baasicUser.userName}}</strong>!</div>
                     <div>
-                        <paper-button on-click="{{logOut}}">Log out</paper-button>
+                        <paper-button on-click="logOut">Log out</paper-button> <paper-button on-click="testClick">Test</paper-button>
                     </div>
                 </div>
             </template>
         </div>
-        <baasic-globals id="globals"></baasic-globals>
-        <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
-                     id="ajax"
-                     method="POST"
-                     params='{"type":"Forms"}'
-                     handleas="json"
-                     on-core-response="{{ajaxPostResponse}}"
-                     on-core-error="{{ajaxPostError}}"></baasic-ajax>
-        <baasic-ajax url="{{baseUrl}}/{{version}}/{{application}}/login"
-                     id="ajaxGet"
-                     method="GET"
-                     params='{"type":"Forms"}'
-                     contenttype="application/json"
-                     handleas="json"
-                     on-core-response="{{ajaxGetResponse}}"
-                     on-core-error="{{ajaxGetError}}"></baasic-ajax>
 
-        <core-signals on-core-signal-user-login="{{loginChanged}}"></core-signals>
+        <iron-signals on-iron-signal-user-login="loginChanged"></iron-signals>
         <paper-toast text="An error has occured while trying to log you in. Please check your data and try again." id="toastError" onclick="discardToast(el)"></paper-toast>
     </template>
-    <script>
-        Polymer('baasic-login', {
-            /**
-             * Fires a core signal names user-login when user changes login status.
-             * 
-             * @event core-signal
-             */
-            /**
-            /**
-             * The URL target of the Baasic service. Can be used with baasic-globals element to set the property for all baasic elements in one place.
-             * 
-             * @attribute baseUrl
-             * @type string
-             * @default ''
-             */
-            baseUrl: '',
-            /**
-             * The versione Baasic service. Can be used with baasic-globals element to set the property for all baasic elements in one place.
-             * 
-             * @attribute version
-             * @type string
-             * @default ''
-             */
-            version: '',
-            /**
-             * The name of the Baasic application, unique per user. Can be used with baasic-globals element to set the property for all baasic elements in one place.
-             * 
-             * @attribute application
-             * @type string
-             * @default ''
-             */
-            application: '',
-            /**
-             * URL of the page that user is redirected to when logged in. 
-             * 
-             * @attribute application
-             * @type string
-             * @default ''
-             */
-            redirectUrl: '',
-            username: '',
-            password: '',
-            baasicUser: {},
-            isLoggedIn: false,
-            loginInProgress: false,
-            ready: function () {
-                var globals = this.$.globals;
-                if (!this.baseUrl) this.baseUrl = globals.config.baseUrl;
-                if (!this.version) this.version = globals.config.version;
-                if (!this.application) this.application = globals.config.application;
-                this.loadUser();
-            },
-            loadUser: function () {
-                this.baasicUser = Baasic.Cache.getItem('baasicUser');
-                if (!this.baasicUser)
-                    this.baasicUser = {};
-                this.toggleView();
-            },
-            logIn: function () {
-                this.loginInProgress = true;
-                var ajax = this.$.ajax;
-                ajax.body = 'grant_type=password&username=' + this.username + '&password=' + this.password;
-                ajax.go();
-            },
-            loginChanged: function (data) {
-                if (data.detail && data.detail.baasicUser && !data.detail.baasicUser.accessToken) {
-                    this.resetUser();
-                }
-            },
-            resetUser: function () {
+
+</dom-module>
+
+<script>
+
+    Polymer({
+
+        is: 'baasic-login',
+        behaviors: [Baasic.Ajax, Baasic.Config],
+        properties: {
+
+            redirectUrl: { type: String, value: '' },
+            loginInProgress: { type: Boolean, value: false, notify: true },
+            isLoggedIn: { type: Boolean, value: false, notify: true }
+
+        },
+        computeLoginUrl: function (baseUrl, version, application) {
+            return (baseUrl + '/' + version + "/" + application + '/login?type=Forms');
+        },
+
+        username: '',
+        password: '',
+        baasicUser: {},
+        loginUrl: '',
+
+        // Element Lifecycle
+
+        ready: function () {
+            //if (!this.baseUrl) this.baseUrl = Baasic.Config.baseUrl;
+            //if (!this.version) this.version = Baasic.Config.version;
+            //if (!this.application) this.application = Baasic.Config.application;
+            this.loginUrl = this.computeLoginUrl(this.baseUrl, this.version, this.application);
+            this.loadUser();
+        },
+
+        loadUser: function () {
+            this.baasicUser = Baasic.Cache.getItem('baasicUser');
+            if (!this.baasicUser)
                 this.baasicUser = {};
-                Baasic.Cache.removeItem('baasicUser');
-                this.toggleView();
-            },
-            logOut: function () {
-                //signal that user has logged out, so other modules could switch views acordingly
-                this.fire('core-signal', { name: 'user-login', data: { baasicUser: {} } });
-            },
-            ajaxPostResponse: function (e) {
-                this.baasicUser.accessToken = e.detail.response.access_token;
-                this.baasicUser.tokenType = e.detail.response.token_type;
-                this.baasicUser.userName = this.username;
-                this.baasicUser.expiresIn = e.detail.response.expires_in;
-                //before storing the user to the cache, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
-                var ajaxGet = this.$.ajaxGet;
-                var headers = ajaxGet.headers || {};
-                headers['Authorization'] = this.baasicUser.tokenType + ' ' + this.baasicUser.accessToken;
-                ajaxGet.headers = headers;
-                this.$.ajaxGet.go();
-            },
-            ajaxPostError: function (e) {
-                this.loginInProgress = false;
-                this.$.toastError.show();
-            },
-            ajaxGetResponse: function (e) {
-                this.baasicUser.roles = e.detail.response.roles;
-                this.baasicUser.id = e.detail.response.id;
-                this.baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this.baasicUser.expiresIn * 1000));
-                this.baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.$.globals.config.adminRoles, e.detail.response.roles);
-                //now that we have everything, save the user data to the local storage
-                Baasic.Cache.setItem('baasicUser', this.baasicUser, {
-                    expirationAbsolute: this.baasicUser.expiresAbsolute,
-                    expirationSliding: null,
-                    priority: Cache.Priority.HIGH,
-                    callback: null
-                });
+            this.toggleView();
+        },
+        logIn: function () {
+            this.loginInProgress = true;
 
-                //signal that user has logged in, so other modules could switch views acordingly
-                this.fire('core-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
-                this.loginInProgress = false;
-                //redirect to another URL if needed
-                if (this.redirectUrl)
-                    window.location.href = this.redirectUrl;
-                else
-                    this.toggleView();
-
-            },
-            ajaxGetError: function (e) {
-                this.loginInProgress = false;
-                this.$.toastError.show();
-            },
-            toggleView: function () {
-                if (this.baasicUser && this.baasicUser.accessToken)
-                    this.isLoggedIn = true;
-                else
-                    this.isLoggedIn = false;
-            },
-            discardToast: function (el) {
-                el.dismiss();
+            Baasic.Ajax.go(this.loginUrl,
+                            'POST',
+                            'grant_type=password&username=' + this.username + '&password=' + this.password,
+                            null,
+                            'application/x-www-form-urlencoded')
+                        .then(this.postResponse.bind(this))
+                        .catch(this.postError.bind(this));
+        },
+        loginChanged: function (data) {
+            if (data.detail && data.detail.baasicUser && !data.detail.baasicUser.accessToken) {
+                this.resetUser();
             }
-        });
-    </script>
-</polymer-element>
+        },
+        resetUser: function () {
+            this.baasicUser = {};
+            Baasic.Cache.removeItem('baasicUser');
+            this.toggleView();
+        },
+        logOut: function () {
+            //signal that user has logged out, so other modules could switch views acordingly
+            this.fire('iron-signal', { name: 'user-login', data: { baasicUser: {} } });
+        },
+        testClick: function () {
+            Baasic.Ajax.getFromCache(this.baseUrl + '/' + this.version + '/' + this.application + '/roles/?rpp=100&sort=Name|asc', 'baasicRoles', 'item', this.cacheExpiration).then(function (d) { console.log(d.data); }).catch(function (d) { console.log(d) });
+        },
+        postResponse: function (e) {
+            this.baasicUser.accessToken = e.access_token;
+            this.baasicUser.tokenType = e.token_type;
+            this.baasicUser.userName = this.username;
+            this.baasicUser.expiresIn = e.expires_in;
+            ////before storing the user to the cache, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
+            Baasic.Ajax.go(this.loginUrl,
+                            'GET',
+                            null,
+                            this.baasicUser.tokenType + ' ' + this.baasicUser.accessToken)
+                        .then(this.getResponse.bind(this))
+                        .catch(this.getError.bind(this));
+
+        },
+        postError: function (e) {
+            this.loginInProgress = false;
+            this.$.toastError.show();
+        },
+        getResponse: function (e) {
+            this.baasicUser.roles = e.roles;
+            this.baasicUser.id = e.id;
+            this.baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this.baasicUser.expiresIn * 1000));
+            this.baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.adminRoles, e.roles);
+            ////now that we have everything, save the user data to the local storage
+            Baasic.Cache.setItem('baasicUser', this.baasicUser, {
+                expirationAbsolute: this.baasicUser.expiresAbsolute,
+                expirationSliding: null,
+                priority: Cache.Priority.HIGH,
+                callback: null
+            });
+
+            ////signal that user has logged in, so other modules could switch views acordingly
+            this.fire('core-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
+            this.loginInProgress = false;
+            ////redirect to another URL if needed
+            if (this.redirectUrl)
+                window.location.href = this.redirectUrl;
+            else
+                this.toggleView();
+
+        },
+        getError: function (e) {
+            this.loginInProgress = false;
+            this.$.toastError.show();
+        },
+        toggleView: function () {
+            if (this.baasicUser && this.baasicUser.accessToken)
+                this.isLoggedIn = true;
+            else
+                this.isLoggedIn = false;
+        },
+        discardToast: function (el) {
+            el.dismiss();
+        }
+
+    });
+
+</script>
