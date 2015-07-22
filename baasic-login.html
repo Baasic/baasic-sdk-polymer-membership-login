@@ -125,26 +125,20 @@ Example:
         behaviors: [Baasic.Ajax, Baasic.Config],
         properties: {
 
-            redirectUrl: { type: String, value: '' },
+            redirectUrl: { type: String, value: '', notify:true },
             loginInProgress: { type: Boolean, value: false, notify: true },
-            isLoggedIn: { type: Boolean, value: false, notify: true }
+            isLoggedIn: { type: Boolean, value: false, notify: true },
+            username: { type: String, value: '', notify: true },
+            password: { type: String, value: '', notify: true }
 
         },
         computeLoginUrl: function (baseUrl, version, application) {
             return (baseUrl + '/' + version + "/" + application + '/login?type=Forms');
         },
-
-        username: '',
-        password: '',
         baasicUser: {},
         loginUrl: '',
-
         // Element Lifecycle
-
         ready: function () {
-            //if (!this.baseUrl) this.baseUrl = Baasic.Config.baseUrl;
-            //if (!this.version) this.version = Baasic.Config.version;
-            //if (!this.application) this.application = Baasic.Config.application;
             this.loginUrl = this.computeLoginUrl(this.baseUrl, this.version, this.application);
             this.loadUser();
         },
@@ -215,7 +209,7 @@ Example:
             });
 
             ////signal that user has logged in, so other modules could switch views acordingly
-            this.fire('core-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
+            this.fire('iron-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
             this.loginInProgress = false;
             ////redirect to another URL if needed
             if (this.redirectUrl)

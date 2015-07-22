@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <!--
 @license
 Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
@@ -9,48 +9,106 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
-
+    <script src="../../test-fixture/test-fixture-mocha.js"></script>
+    <script src="../../sinonjs/sinon.js"></script>
     <!-- Step 1: import the element to test -->
+    <link rel="import" href="../../polymer/polymer.html">
+    <link rel="import" href="../../test-fixture/test-fixture.html">
+    <link rel="import" href="../../baasic-globals/globals-import.html">
+
     <link rel="import" href="../baasic-login.html">
-  </head>
-  <body>
-
-    <!-- You can use the document as a place to set up your fixtures. -->
-    <baasic-login></baasic-login>
-
+</head>
+<body>
+    <test-fixture id="LoginFixture">
+        <template>
+            <baasic-login application="WebComponents" base-url="/testurl" version="beta"></baasic-login>        
+        </template>
+    </test-fixture>
     <script>
-      var myEl = document.querySelector('baasic-login');
+        var myEl;
 
-      suite('<baasic-login>', function() {
+        var localuser = {};
 
-        test('defines the "author" property', function() {
-          assert.equal(myEl.author.name, 'Dimitri Glazkov');
-          assert.equal(myEl.author.image, 'http://addyosmani.com/blog/wp-content/uploads/2013/04/unicorn.jpg');
+        var setItem = function (key, value, options) {
+            localuser = value;
+        }
+
+        var removeItem = function (item) {
+            localuser = {};
+        }
+
+        describe('<baasic-login>', function () {
+           
+            before(function() {
+                var postResponse = '{"access_token":"testtoken","token_type":"bearer","expires_in":7200}';
+                var getResponse = '{"displayName":"testuser","email":"testuser@baasic.com","permissions":null,"roles":["Administrators"],"userName":"testuser","dateCreated":"0001-01-01T00:00:00","dateUpdated":"0001-01-01T00:00:00","id":"q3Ffk00aSawklADb0HhJi0"}';
+
+                var ajaxStub = sinon.stub(Baasic.Ajax, 'go');
+                ajaxStub.withArgs('/testurl/beta/WebComponents/login?type=Forms', 'POST', 'grant_type=password&username=testuser&password=testpwd', null, 'application/x-www-form-urlencoded')
+                    .returns(Promise.resolve(JSON.parse(postResponse)));
+
+                ajaxStub.withArgs('/testurl/beta/WebComponents/login?type=Forms', 'GET') 
+                    .returns(Promise.resolve(JSON.parse(getResponse)));
+
+                var cacheWriteStub = sinon.stub(Baasic.Cache, 'setItem', setItem);
+                
+                var cacheReadStub = sinon.stub(Baasic.Cache, 'getItem');
+                cacheReadStub.withArgs('baasicUser').returns(localuser);
+
+                var cacheRemoveStub = sinon.stub(Baasic.Cache, 'removeItem', removeItem);
+            });
+
+            beforeEach(function () {
+                myEl = fixture('LoginFixture');
+                myEl.username = 'testuser';
+                myEl.password = 'testpwd';
+                localuser = {};
+            });
+
+            after(function () {
+                Baasic.Ajax.go.restore();
+                Baasic.Cache.getItem.restore();
+                Baasic.Cache.setItem.restore();
+            });
+
+            describe('starting state', function() {
+                it('should have the URL set up', function () {
+                    expect(myEl.loginUrl).to.be.equal('/testurl/beta/WebComponents/login?type=Forms');
+                });
+            });
+            describe('login functionality', function () {
+                it('should issue a proper login request', function (done) {
+                    expect(Baasic.Cache.getItem('baasicUser')).to.be.empty;
+                    myEl.logIn();
+                    flush(function () {
+                        //expectations after successful login
+                        expect(Baasic.Cache.getItem('baasicUser')).not.to.be.null;
+                        expect(Baasic.Cache.getItem('baasicUser').accessToken).to.be.equal('testtoken');
+                        done();
+                    });
+                });
+
+            });
+            describe('logout functionality', function () {
+                it('should clean up after itself and reset the view', function (done) {
+                    //run the lifecycle methods
+                    myEl.logIn();
+                    myEl.logOut();
+                    flush(function () {
+                        //expectations after successful logout
+                        expect(Baasic.Cache.getItem('baasicUser').username).to.be.empty;
+                        done();
+                    });
+                });
+            });
+
+
         });
-
-        test('says hello', function() {
-          assert.equal(myEl.sayHello(), 'baasic-login says, Hello World!');
-
-          var greetings = myEl.sayHello('greetings Earthlings');
-          assert.equal(greetings, 'baasic-login says, greetings Earthlings');
-        });
-
-        test('fires lasers', function(done) {
-          myEl.addEventListener('baasic-login-lasers', function(event) {
-            assert.equal(event.detail.sound, 'Pew pew!');
-            done();
-          });
-          myEl.fireLasers();
-        });
-
-      });
     </script>
-
-  </body>
+</body>
 </html>
