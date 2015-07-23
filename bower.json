@@ -1,26 +1,28 @@
 {
   "name": "baasic-login",
-  "version": "1.0.0",
-  "authors": [
-    "Anonymous <anonymous@example.com>"
-  ],
-  "description": "An element providing a solution to no problem in particular.",
+  "description": "Baasic login Web component",
   "keywords": [
-    "web-component",
-    "web-components",
     "polymer",
-    "seed"
+    "web-components",
+    "baasic",
+    "membership",
+    "login"
   ],
   "main": "baasic-login.html",
-  "license": "http://polymer.github.io/LICENSE.txt",
-  "homepage": "https://github.com/<USERNAME>/seed-element/",
+  "license": "MIT",
+  "homepage": "https://github.com/baasic/baasic-sdk-polymer-membership-login",
   "ignore": [
     "/.*",
     "/test/",
     "/demo/"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.0.0"
+    "polymer": "Polymer/polymer#^1.0.0",
+    "paper-button": "PolymerElements/paper-button#^1.0.0",
+    "paper-input": "PolymerElements/paper-input#^1.0.0",
+    "paper-toast": "PolymerElements/paper-toast#^1.0.0",
+    "iron-signals": "PolymerElements/iron-signals#^1.0.0",
+    "baasic-globals": "Baasic/baasic-sdk-polymer-core-globals#^1.0.0"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",

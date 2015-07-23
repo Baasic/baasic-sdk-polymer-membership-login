@@ -105,7 +105,7 @@ Example:
                 <div id="loggedin" class="[ logininfo ]">
                     <div class="[ message ]">Welcome <strong>{{baasicUser.userName}}</strong>!</div>
                     <div>
-                        <paper-button on-click="logOut">Log out</paper-button> <paper-button on-click="testClick">Test</paper-button>
+                        <paper-button id="btnClick" on-click="logOut">Log out</paper-button> 
                     </div>
                 </div>
             </template>
@@ -173,9 +173,6 @@ Example:
         logOut: function () {
             //signal that user has logged out, so other modules could switch views acordingly
             this.fire('iron-signal', { name: 'user-login', data: { baasicUser: {} } });
-        },
-        testClick: function () {
-            Baasic.Ajax.getFromCache(this.baseUrl + '/' + this.version + '/' + this.application + '/roles/?rpp=100&sort=Name|asc', 'baasicRoles', 'item', this.cacheExpiration).then(function (d) { console.log(d.data); }).catch(function (d) { console.log(d) });
         },
         postResponse: function (e) {
             this.baasicUser.accessToken = e.access_token;

@@ -16,19 +16,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script src="../../web-component-tester/browser.js"></script>
     <script src="../../test-fixture/test-fixture-mocha.js"></script>
     <script src="../../sinonjs/sinon.js"></script>
-    <!-- Step 1: import the element to test -->
     <link rel="import" href="../../polymer/polymer.html">
     <link rel="import" href="../../test-fixture/test-fixture.html">
-    <link rel="import" href="../../baasic-globals/globals-import.html">
 
+    <link rel="import" href="../../baasic-globals/globals-import.html">
     <link rel="import" href="../baasic-login.html">
 </head>
 <body>
     <test-fixture id="LoginFixture">
         <template>
-            <baasic-login application="WebComponents" base-url="/testurl" version="beta"></baasic-login>        
+            <baasic-login application="WebComponents" base-url="/testurl" version="beta"></baasic-login>
         </template>
     </test-fixture>
+    <test-fixture id="ErrorFixture">
+        <template>
+            <baasic-login application="WebComponents" base-url="/errorurl" version="beta"></baasic-login>
+        </template>
+    </test-fixture>
+
     <script>
         var myEl;
 
@@ -43,20 +48,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         describe('<baasic-login>', function () {
-           
-            before(function() {
+
+            before(function () {
                 var postResponse = '{"access_token":"testtoken","token_type":"bearer","expires_in":7200}';
                 var getResponse = '{"displayName":"testuser","email":"testuser@baasic.com","permissions":null,"roles":["Administrators"],"userName":"testuser","dateCreated":"0001-01-01T00:00:00","dateUpdated":"0001-01-01T00:00:00","id":"q3Ffk00aSawklADb0HhJi0"}';
+                var errorResponse = 'An error has occured';
 
                 var ajaxStub = sinon.stub(Baasic.Ajax, 'go');
                 ajaxStub.withArgs('/testurl/beta/WebComponents/login?type=Forms', 'POST', 'grant_type=password&username=testuser&password=testpwd', null, 'application/x-www-form-urlencoded')
                     .returns(Promise.resolve(JSON.parse(postResponse)));
 
-                ajaxStub.withArgs('/testurl/beta/WebComponents/login?type=Forms', 'GET') 
+                ajaxStub.withArgs('/testurl/beta/WebComponents/login?type=Forms', 'POST', 'grant_type=password&username=testuser&password=error', null, 'application/x-www-form-urlencoded')
+                    .returns(Promise.reject(errorResponse));
+
+                ajaxStub.withArgs('/testurl/beta/WebComponents/login?type=Forms', 'GET')
                     .returns(Promise.resolve(JSON.parse(getResponse)));
 
+                ajaxStub.withArgs('/errorurl/beta/WebComponents/login?type=Forms')
+                    .returns(Promise.reject(errorResponse));
+
                 var cacheWriteStub = sinon.stub(Baasic.Cache, 'setItem', setItem);
-                
+
                 var cacheReadStub = sinon.stub(Baasic.Cache, 'getItem');
                 cacheReadStub.withArgs('baasicUser').returns(localuser);
 
@@ -76,32 +88,68 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 Baasic.Cache.setItem.restore();
             });
 
-            describe('starting state', function() {
+            describe('starting state', function () {
                 it('should have the URL set up', function () {
                     expect(myEl.loginUrl).to.be.equal('/testurl/beta/WebComponents/login?type=Forms');
                 });
             });
             describe('login functionality', function () {
-                it('should issue a proper login request', function (done) {
+                it('should handle a proper login request', function (done) {
                     expect(Baasic.Cache.getItem('baasicUser')).to.be.empty;
                     myEl.logIn();
                     flush(function () {
-                        //expectations after successful login
+                        //expectations after successful login.
                         expect(Baasic.Cache.getItem('baasicUser')).not.to.be.null;
                         expect(Baasic.Cache.getItem('baasicUser').accessToken).to.be.equal('testtoken');
+                        //subelement visibility
+                        expect(myEl.$$('#loginbox').style.display).to.be.equal('none');
+                        expect(myEl.$$('#loggedin').style.display).to.be.empty;
                         done();
                     });
                 });
+                it('should display error message when username and password does not match and reject access', function (done) {
+                    myEl.password = 'error';
+                    var toast = myEl.$.toastError;
+                    expect(toast.hidden).to.be.false;
+                    myEl.logIn();
+                    flush(function () {
+                        expect(Baasic.Cache.getItem('baasicUser').username).to.be.empty;
+                        expect(toast.hidden).to.be.false;
+                        done();
+                    });
+                });
+
 
             });
             describe('logout functionality', function () {
                 it('should clean up after itself and reset the view', function (done) {
                     //run the lifecycle methods
                     myEl.logIn();
-                    myEl.logOut();
                     flush(function () {
-                        //expectations after successful logout
-                        expect(Baasic.Cache.getItem('baasicUser').username).to.be.empty;
+                        myEl.logOut();
+                        flush(function () {
+                            //expectations after successful logout
+                            expect(Baasic.Cache.getItem('baasicUser').username).to.be.empty;
+                            //subelement visibility
+                            expect(myEl.$$('#loginbox').style.display).to.be.empty;
+                            expect(myEl.$$('#loggedin').style.display).to.be.equal('none');
+                            done();
+                        });
+                    });
+                });
+            });
+            describe('network error handling functionality', function () {
+                var errEl = fixture('ErrorFixture');
+                errEl.username = 'testuser';
+                errEl.password = 'testpwd';
+
+                it('should display error message when communication fails', function (done) {
+                    var toast = errEl.$.toastError;
+                    expect(toast.hidden).to.be.false;
+                    errEl.logIn();
+                    flush(function () {
+                        //show error msg when network error occurs
+                        expect(toast.hidden).to.be.false;
                         done();
                     });
                 });
@@ -111,4 +159,5 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
     </script>
 </body>
+
 </html>
