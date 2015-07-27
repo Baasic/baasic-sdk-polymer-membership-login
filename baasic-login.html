@@ -17,13 +17,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../iron-signals/iron-signals.html">
 
 <!--
-An element providing a solution to no problem in particular.
+The `baasic-login` element provides support for authenticating users and logging them in to Baasic applications.
 
-Example:
+    <baasic-login application="webcomponents" version="beta">
+    </baasic-login>
 
-    <baasic-login></baasic-login>
-
+@element baasic-login
+@group Baasic Polymer Elements
 @demo
+@homepage www.baasic.com
 -->
 <dom-module id="baasic-login">
 
@@ -112,121 +114,173 @@ Example:
         </div>
 
         <iron-signals on-iron-signal-user-login="loginChanged"></iron-signals>
-        <paper-toast text="An error has occured while trying to log you in. Please check your data and try again." id="toastError" onclick="discardToast(el)"></paper-toast>
+        <paper-toast text="An error has occured while trying to log you in. Please check your data and try again." id="toastError" onclick="this.hide()"></paper-toast>
     </template>
 
 </dom-module>
 
 <script>
+    'use strict';
 
     Polymer({
-
         is: 'baasic-login',
+        /**
+        * Fired when a change in user login status happens (log in or log out). Holds user information (baasicUser) that can be queried.
+        *
+        * @event user-login
+        */
         behaviors: [Baasic.Ajax, Baasic.Config],
         properties: {
-
+            /**
+            * Redirect URL is used when you want to redirect user to a separate page after the login or logout action is executed.
+            */
             redirectUrl: { type: String, value: '', notify:true },
+            /**
+            * Indicates if login process is taking place.
+            */
             loginInProgress: { type: Boolean, value: false, notify: true },
+            /**
+            * Indicates if user is logged in, or component is used in 'anonymous' mode.
+            */
             isLoggedIn: { type: Boolean, value: false, notify: true },
+            /**
+            * User name.
+            */
             username: { type: String, value: '', notify: true },
+            /**
+            * User password.
+            */
             password: { type: String, value: '', notify: true }
-
         },
-        computeLoginUrl: function (baseUrl, version, application) {
+        /**
+        * Baasic user object for logged-in users.
+        */
+        _baasicUser: {},
+        /**
+        * Login service endpoint URL.
+        */
+        _loginUrl: '',
+        /**
+        * Produces the login URL when passed Baasic base URL, version and application name.
+        */
+        _computeLoginUrl: function (baseUrl, version, application) {
             return (baseUrl + '/' + version + "/" + application + '/login?type=Forms');
         },
-        baasicUser: {},
-        loginUrl: '',
         // Element Lifecycle
         ready: function () {
-            this.loginUrl = this.computeLoginUrl(this.baseUrl, this.version, this.application);
-            this.loadUser();
+            this._loginUrl = this._computeLoginUrl(this.baseUrl, this.version, this.application);
+            this._loadUser();
         },
-
-        loadUser: function () {
-            this.baasicUser = Baasic.Cache.getItem('baasicUser');
-            if (!this.baasicUser)
-                this.baasicUser = {};
-            this.toggleView();
+        /**
+        * Loads user from local cache.
+        */
+        _loadUser: function () {
+            this._baasicUser = Baasic.Cache.getItem('baasicUser');
+            if (!this._baasicUser)
+                this._baasicUser = {};
+            this._toggleView();
         },
+        /**
+        * Logs in user by POSTing its username and password to the appropriate membership service endpoint URL. Performs an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
+        */
         logIn: function () {
             this.loginInProgress = true;
-
-            Baasic.Ajax.go(this.loginUrl,
+            Baasic.Ajax.go(this._loginUrl,
                             'POST',
                             'grant_type=password&username=' + this.username + '&password=' + this.password,
                             null,
                             'application/x-www-form-urlencoded')
-                        .then(this.postResponse.bind(this))
-                        .catch(this.postError.bind(this));
+                        .then(this._postResponse.bind(this))
+                        .catch(this._postError.bind(this));
         },
+        /**
+        * Resets the view when user logs out.
+        */
         loginChanged: function (data) {
             if (data.detail && data.detail.baasicUser && !data.detail.baasicUser.accessToken) {
-                this.resetUser();
+                this._resetUser();
             }
         },
-        resetUser: function () {
-            this.baasicUser = {};
+        /**
+        * Removes the user from the cache and toggles the view to appropriate state.
+        */
+        _resetUser: function () {
+            this._baasicUser = {};
             Baasic.Cache.removeItem('baasicUser');
-            this.toggleView();
+            this._toggleView();
         },
+        /**
+        * Logs out the user.
+        */
         logOut: function () {
             //signal that user has logged out, so other modules could switch views acordingly
             this.fire('iron-signal', { name: 'user-login', data: { baasicUser: {} } });
         },
-        postResponse: function (e) {
-            this.baasicUser.accessToken = e.access_token;
-            this.baasicUser.tokenType = e.token_type;
-            this.baasicUser.userName = this.username;
-            this.baasicUser.expiresIn = e.expires_in;
+        /**
+        * Handles the POST response, stores the user details and performs an additional GET request to retrieve additional user data.
+        */
+        _postResponse: function (e) {
+            this._baasicUser.accessToken = e.access_token;
+            this._baasicUser.tokenType = e.token_type;
+            this._baasicUser.userName = this.username;
+            this._baasicUser.expiresIn = e.expires_in;
             ////before storing the user to the cache, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
-            Baasic.Ajax.go(this.loginUrl,
+            Baasic.Ajax.go(this._loginUrl,
                             'GET',
                             null,
-                            this.baasicUser.tokenType + ' ' + this.baasicUser.accessToken)
-                        .then(this.getResponse.bind(this))
-                        .catch(this.getError.bind(this));
+                            this._baasicUser.tokenType + ' ' + this._baasicUser.accessToken)
+                        .then(this._getResponse.bind(this))
+                        .catch(this._getError.bind(this));
 
         },
-        postError: function (e) {
+        /**
+        * Handles the POST error.
+        */
+        _postError: function (e) {
             this.loginInProgress = false;
             this.$.toastError.show();
         },
-        getResponse: function (e) {
-            this.baasicUser.roles = e.roles;
-            this.baasicUser.id = e.id;
-            this.baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this.baasicUser.expiresIn * 1000));
-            this.baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.adminRoles, e.roles);
+        /**
+        * Handles the GET response, stores the additional user details and stores the completed user object to the cache.
+        */
+        _getResponse: function (e) {
+            this._baasicUser.roles = e.roles;
+            this._baasicUser.id = e.id;
+            this._baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this._baasicUser.expiresIn * 1000));
+            this._baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.adminRoles, e.roles);
             ////now that we have everything, save the user data to the local storage
-            Baasic.Cache.setItem('baasicUser', this.baasicUser, {
-                expirationAbsolute: this.baasicUser.expiresAbsolute,
+            Baasic.Cache.setItem('baasicUser', this._baasicUser, {
+                expirationAbsolute: this._baasicUser.expiresAbsolute,
                 expirationSliding: null,
                 priority: Cache.Priority.HIGH,
                 callback: null
             });
 
             ////signal that user has logged in, so other modules could switch views acordingly
-            this.fire('iron-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
+            this.fire('iron-signal', { name: 'user-login', data: { baasicUser: this._baasicUser } });
             this.loginInProgress = false;
             ////redirect to another URL if needed
             if (this.redirectUrl)
                 window.location.href = this.redirectUrl;
             else
-                this.toggleView();
+                this._toggleView();
 
         },
-        getError: function (e) {
+        /**
+        * Handles the GET error.
+        */
+        _getError: function (e) {
             this.loginInProgress = false;
             this.$.toastError.show();
         },
-        toggleView: function () {
-            if (this.baasicUser && this.baasicUser.accessToken)
+        /**
+        * Toggles the element UI in response to the user status.
+        */
+        _toggleView: function () {
+            if (this._baasicUser && this._baasicUser.accessToken)
                 this.isLoggedIn = true;
             else
                 this.isLoggedIn = false;
-        },
-        discardToast: function (el) {
-            el.dismiss();
         }
 
     });

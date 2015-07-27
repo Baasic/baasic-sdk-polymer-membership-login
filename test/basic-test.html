@@ -36,7 +36,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <script>
         var myEl;
-
         var localuser = {};
 
         var setItem = function (key, value, options) {
@@ -79,6 +78,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 myEl = fixture('LoginFixture');
                 myEl.username = 'testuser';
                 myEl.password = 'testpwd';
+
                 localuser = {};
             });
 
@@ -90,7 +90,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             describe('starting state', function () {
                 it('should have the URL set up', function () {
-                    expect(myEl.loginUrl).to.be.equal('/testurl/beta/WebComponents/login?type=Forms');
+                    expect(myEl._loginUrl).to.be.equal('/testurl/beta/WebComponents/login?type=Forms');
                 });
             });
             describe('login functionality', function () {
@@ -139,9 +139,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 });
             });
             describe('network error handling functionality', function () {
-                var errEl = fixture('ErrorFixture');
-                errEl.username = 'testuser';
-                errEl.password = 'testpwd';
+                var errEl;
+                before(function () {
+                    errEl = fixture('ErrorFixture');
+                    errEl.username = 'testuser';
+                    errEl.password = 'testpwd';
+                });
 
                 it('should display error message when communication fails', function (done) {
                     var toast = errEl.$.toastError;
