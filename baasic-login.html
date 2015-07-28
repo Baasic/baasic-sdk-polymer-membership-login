@@ -155,7 +155,7 @@ The `baasic-login` element provides support for authenticating users and logging
         /**
         * Baasic user object for logged-in users.
         */
-        _baasicUser: {},
+        baasicUser: {},
         /**
         * Login service endpoint URL.
         */
@@ -175,9 +175,9 @@ The `baasic-login` element provides support for authenticating users and logging
         * Loads user from local cache.
         */
         _loadUser: function () {
-            this._baasicUser = Baasic.Cache.getItem('baasicUser');
-            if (!this._baasicUser)
-                this._baasicUser = {};
+            this.baasicUser = Baasic.Cache.getItem('baasicUser');
+            if (!this.baasicUser)
+                this.baasicUser = {};
             this._toggleView();
         },
         /**
@@ -205,7 +205,7 @@ The `baasic-login` element provides support for authenticating users and logging
         * Removes the user from the cache and toggles the view to appropriate state.
         */
         _resetUser: function () {
-            this._baasicUser = {};
+            this.baasicUser = {};
             Baasic.Cache.removeItem('baasicUser');
             this._toggleView();
         },
@@ -220,15 +220,15 @@ The `baasic-login` element provides support for authenticating users and logging
         * Handles the POST response, stores the user details and performs an additional GET request to retrieve additional user data.
         */
         _postResponse: function (e) {
-            this._baasicUser.accessToken = e.access_token;
-            this._baasicUser.tokenType = e.token_type;
-            this._baasicUser.userName = this.username;
-            this._baasicUser.expiresIn = e.expires_in;
+            this.baasicUser.accessToken = e.access_token;
+            this.baasicUser.tokenType = e.token_type;
+            this.baasicUser.userName = this.username;
+            this.baasicUser.expiresIn = e.expires_in;
             ////before storing the user to the cache, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
             Baasic.Ajax.go(this._loginUrl,
                             'GET',
                             null,
-                            this._baasicUser.tokenType + ' ' + this._baasicUser.accessToken)
+                            this.baasicUser.tokenType + ' ' + this.baasicUser.accessToken)
                         .then(this._getResponse.bind(this))
                         .catch(this._getError.bind(this));
 
@@ -244,20 +244,20 @@ The `baasic-login` element provides support for authenticating users and logging
         * Handles the GET response, stores the additional user details and stores the completed user object to the cache.
         */
         _getResponse: function (e) {
-            this._baasicUser.roles = e.roles;
-            this._baasicUser.id = e.id;
-            this._baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this._baasicUser.expiresIn * 1000));
-            this._baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.adminRoles, e.roles);
+            this.baasicUser.roles = e.roles;
+            this.baasicUser.id = e.id;
+            this.baasicUser.expiresAbsolute = new Date(new Date().getTime() + (this.baasicUser.expiresIn * 1000));
+            this.baasicUser.isAdmin = Baasic.Utils.isArrayMatch(this.adminRoles, e.roles);
             ////now that we have everything, save the user data to the local storage
-            Baasic.Cache.setItem('baasicUser', this._baasicUser, {
-                expirationAbsolute: this._baasicUser.expiresAbsolute,
+            Baasic.Cache.setItem('baasicUser', this.baasicUser, {
+                expirationAbsolute: this.baasicUser.expiresAbsolute,
                 expirationSliding: null,
                 priority: Cache.Priority.HIGH,
                 callback: null
             });
 
             ////signal that user has logged in, so other modules could switch views acordingly
-            this.fire('iron-signal', { name: 'user-login', data: { baasicUser: this._baasicUser } });
+            this.fire('iron-signal', { name: 'user-login', data: { baasicUser: this.baasicUser } });
             this.loginInProgress = false;
             ////redirect to another URL if needed
             if (this.redirectUrl)
@@ -277,7 +277,7 @@ The `baasic-login` element provides support for authenticating users and logging
         * Toggles the element UI in response to the user status.
         */
         _toggleView: function () {
-            if (this._baasicUser && this._baasicUser.accessToken)
+            if (this.baasicUser && this.baasicUser.accessToken)
                 this.isLoggedIn = true;
             else
                 this.isLoggedIn = false;
