@@ -42,6 +42,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             localuser = value;
         }
 
+        var getItem = function () {
+            return localuser;
+        }
+
         var removeItem = function (item) {
             localuser = {};
         }
@@ -67,10 +71,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .returns(Promise.reject(errorResponse));
 
                 var cacheWriteStub = sinon.stub(Baasic.Cache, 'setItem', setItem);
-
-                var cacheReadStub = sinon.stub(Baasic.Cache, 'getItem');
-                cacheReadStub.withArgs('baasicUser').returns(localuser);
-
+                var cacheReadStub = sinon.stub(Baasic.Cache, 'getItem', getItem);
                 var cacheRemoveStub = sinon.stub(Baasic.Cache, 'removeItem', removeItem);
             });
 
@@ -86,6 +87,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 Baasic.Ajax.go.restore();
                 Baasic.Cache.getItem.restore();
                 Baasic.Cache.setItem.restore();
+                Baasic.Cache.removeItem.restore();
             });
 
             describe('starting state', function () {
