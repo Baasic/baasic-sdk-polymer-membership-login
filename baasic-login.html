@@ -150,7 +150,7 @@ The `baasic-login` element provides support for authenticating users and logging
             /**
             * User password.
             */
-            password: { type: String, value: '', notify: true }
+            password: { type: String, value: '', notify: true },
         },
         /**
         * Baasic user object for logged-in users.
@@ -223,6 +223,8 @@ The `baasic-login` element provides support for authenticating users and logging
             this.baasicUser.accessToken = e.access_token;
             this.baasicUser.tokenType = e.token_type;
             this.baasicUser.userName = this.username;
+            //notify the UI that the path has changed
+            this.notifyPath('baasicUser.userName', this.baasicUser.userName);
             this.baasicUser.expiresIn = e.expires_in;
             ////before storing the user to the cache, perform an additional GET call on the same login API endpoint to retrieve additional user data - groups, id, etc.
             Baasic.Ajax.go(this._loginUrl,
