@@ -151,11 +151,11 @@ The `baasic-login` element provides support for authenticating users and logging
             * User password.
             */
             password: { type: String, value: '', notify: true },
+            /**
+            * Baasic user object for logged-in users.
+            */
+            baasicUser: { type: Object, value: {}, notify: true }
         },
-        /**
-        * Baasic user object for logged-in users.
-        */
-        baasicUser: {},
         /**
         * Login service endpoint URL.
         */
